@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 # --- КОНФІГУРАЦІЯ ---
 # Вставте ваш токен, який ви отримали від @BotFather
-TELEGRAM_TOKEN = "8532773844:AAGx126BzwAn7xMA9Fs4Y4VOIl3KBxAxh2Q"
+TELEGRAM_TOKEN = "8532773844:AAF0I0Mpp6k_wPeoTXtoAlrlcaGXpTs8Qt4"
 
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
@@ -104,4 +104,5 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
+
     asyncio.run(main())
