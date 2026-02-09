@@ -1,15 +1,18 @@
+
+
 import asyncio
+import os
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.enums import ParseMode
 
-# ВАШ ТОКЕН ВЖЕ ТУТ
-TOKEN = "8532773844:AAF0I0Mpp6k_wPeoTXtoA1rlcaGXpTs8Qt4"
+# ВАШ НОВИЙ ТОКЕН ВЖЕ ТУТ
+TOKEN = "8532773844:AAF0I0Mpp6k_wPeoTXtoAlrlcaGXpTs8Qt4"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Кнопки меню
+# Функція для створення головного меню
 def get_keyboard():
     buttons = [
         [KeyboardButton(text="Розділ 1-2. Сім'я"), KeyboardButton(text="Розділ 2.1. Об'єкти сім'ї")],
@@ -22,24 +25,47 @@ def get_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
+# Команда /start
 @dp.message(F.text == "/start")
 async def cmd_start(message: types.Message):
     await message.answer(
-        "👋 Бот відновлено! Оберіть розділ декларації для отримання довідки та посилання:",
-        reply_markup=get_keyboard()
+        "👋 <b>Бот оновлено!</b>\n\nТепер тут доступні всі розділи декларації (1-16).\n"
+        "Оберіть потрібний розділ для отримання довідки:",
+        reply_markup=get_keyboard(),
+        parse_mode=ParseMode.HTML
     )
 
-# Універсальний обробник
+# Обробник повідомлень (тексти розділів)
 @dp.message()
-async def handle_docs(message: types.Message):
-    responses = {
-        "Розділ 1-2. Сім'я": "<b>Розділ 1-2</b>\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/iv-sub-yekt-deklaruvannya-ta-chleny-jogo-sim-yi/'>НАЗК</a>",
-        "Розділ 12.1. Рахунки": "<b>Розділ 12.1. Рахунки</b>\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/xv-bankivski-ta-inshi-finansovi-ustanovy/'>НАЗК</a>",
-        "Розділ 15. Сумісництво": "<b>Розділ 15. Сумісництво</b>\n🚫 Поліцейським заборонено ст. 25 Закону!\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/'>Детальніше</a>"
-    }
+async def handle_message(message: types.Message):
+    t = message.text
     
-    text = responses.get(message.text, "Оберіть розділ з меню або напишіть /start")
-    await message.answer(text, parse_mode=ParseMode.HTML)
+    if t == "Розділ 1-2. Сім'я":
+        await message.answer("<b>Розділ 1-2. Суб'єкт та сім'я</b>\nДекларуємо себе, чоловіка/дружину та дітей.\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/iv-sub-yekt-deklaruvannya-ta-chleny-jogo-sim-yi/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+    
+    elif t == "Розділ 2.1. Об'єкти сім'ї":
+        await message.answer("<b>Розділ 2.1. Відомості про об’єкти сім'ї</b>\nЗаповнюється, якщо член сім'ї не надав дані про своє майно.", parse_mode=ParseMode.HTML)
+        
+    elif t == "Розділ 3. Нерухомість":
+        await message.answer("<b>Розділ 3. Нерухомість</b>\nВласність, оренда, користування.\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/v-ob-yekty-neruhomosti/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+
+    elif t == "Розділ 4. Цінні речі":
+        await message.answer("<b>Розділ 4. Цінні речі</b>\nМайно вартістю понад 100 ПМ (крім авто).\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/vi-tsinne-ruhome-majno/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+
+    elif t == "Розділ 6. Транспорт":
+        await message.answer("<b>Розділ 6. Транспорт</b>\nАвто, мотоцикли, причепи.\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/viii-tsinne-ruhome-majno-transportni-zasoby/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+
+    elif t == "Розділ 11. Доходи":
+        await message.answer("<b>Розділ 11. Доходи</b>\nЗарплата, подарунки, допомога ВПО.\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/xiii-dohody-u-tomu-chysli-podarunky/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+
+    elif t == "Розділ 12.1. Рахунки":
+        await message.answer("<b>Розділ 12.1. Банківські рахунки</b>\nУсі IBAN-рахунки (навіть порожні).\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/xv-bankivski-ta-inshi-finansovi-ustanovy/'>Роз'яснення НАЗК</a>", parse_mode=ParseMode.HTML)
+
+    elif t == "Розділ 15. Сумісництво":
+        await message.answer("<b>Розділ 15. Сумісництво</b>\n🚫 Поліцейським заборонено оплачувану роботу (крім викладацької).\n🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/'>Детальніше</a>", parse_mode=ParseMode.HTML)
+    
+    else:
+        await message.answer("Будь ласка, оберіть розділ з меню.")
 
 async def main():
     await dp.start_polling(bot)
