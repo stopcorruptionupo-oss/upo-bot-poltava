@@ -1,5 +1,7 @@
+import os
 import asyncio
 import logging
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
@@ -10,16 +12,16 @@ TELEGRAM_TOKEN = "8532773844:AAF0I0Mpp6k_wPeoTXtoAlrlcaGXpTs8Qt4"
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
 
-# --- ПОВНА БАЗА ЗНАНЬ (УСІ 18 РОЗДІЛІВ РОЗГОРНУТО) ---
+# --- ПОВНА БАЗА ЗНАНЬ (УСІ 18 РОЗДІЛІВ) ---
 ANSWERS = {
     "Р1": ("📋 <b>Розділ 1: Вид декларації</b>\n\n"
-           "Обираємо тип «Щорічна» та звітний період «2025 рік». Якщо ви подаєте вперше після призначення — «Кандидата на посаду».\n"
+           "Обираємо тип «Щорічна» та звітний період «2025 рік». Якщо подаєте вперше після призначення — «Кандидата на посаду».\n"
            "🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/i-vydy-deklaratsij-ta-poryadok-yih-podannya/'>Інструкція НАЗК</a>"),
 
     "Р2": ("👤 <b>Розділ 2: Суб'єкт декларування</b>\n\n"
            "🏢 Місце роботи: <b>Управління поліції охорони в Полтавській області</b>.\n"
            "🏷 Код ЄДРПОУ: <b>40109042</b>.\n"
-           "⚠️ <b>ВАЖЛИВО:</b> У полі 'Категорія посади' обирайте — <b>НЕ ЗАСТОСОВУЄТЬСЯ</b>. Також вкажіть ваш УНЗР (13 цифр з ID-картки).\n"
+           "⚠️ <b>ВАЖЛИВО:</b> У полі 'Категорія посади' обирайте — <b>НЕ ЗАСТОСОВУЄТЬСЯ</b>. Вкажіть ваш УНЗР (13 цифр з ID-картки).\n"
            "🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/ii-vidomosti-pro-sub-yekta-deklaruvannya/'>Інструкція НАЗК</a>"),
 
     "Р2.1": ("👥 <b>Розділ 2.1: Члени сім'ї</b>\n\n"
@@ -31,7 +33,7 @@ ANSWERS = {
            "🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/v-ob-yekty-neruhomosti/'>Інструкція НАЗК</a>"),
 
     "Р4": ("🏗️ <b>Розділ 4: Об'єкти незавершеного будівництва</b>\n\n"
-           "Це будинки, які ще не прийняті в експлуатацію, або права на які не зареєстровані. Включаємо як власні недобудови, так і недобудови членів сім'ї.\n"
+           "Будинки, які ще не прийняті в експлуатацію, або права на які не зареєстровані. Включаємо власні недобудови та недобудови членів сім'ї.\n"
            "🔗 <a href='https://wiki.nazk.gov.ua/category/deklaruvannya/vi-ob-yekty-nezavershenogo-budivnytstva/'>Інструкція НАЗК</a>"),
 
     "Р5": ("💎 <b>Розділ 5: Цінне рухоме майно</b>\n\n"
@@ -88,7 +90,6 @@ ANSWERS = {
 }
 
 # --- КЛАВІАТУРИ ---
-
 def main_menu():
     builder = ReplyKeyboardBuilder()
     builder.row(types.KeyboardButton(text="📥 Автозаповнення декларації"))
@@ -110,7 +111,6 @@ def sections_menu():
     return builder.as_markup(resize_keyboard=True)
 
 # --- ОБРОБНИКИ ---
-
 @dp.message(Command("start"))
 @dp.message(F.text == "⬅️ Назад")
 async def start(message: types.Message):
@@ -140,17 +140,22 @@ async def auto_check(message: types.Message):
 @dp.message(F.text == "⚖️ Відповідальність")
 async def responsibility(message: types.Message):
     text = (
-        "⚖️ <b>Відповідальність за завідомо недостовірні відомості:</b>\n\n"
-        "🟥 <b>Кримінальна:</b> понад 750 ПМ* (понад 2 271 000 грн у 2025).\n"
-        "🟧 <b>Адміністративна:</b> від 150 до 750 ПМ*.\n"
-        "🟨 <b>Дисциплінарна:</b> до 150 ПМ*.\n\n"
-        "<i>* 1 ПМ у 2025 році = 3028 грн</i>"
+        "⚖️ <b>Відповідальність за завідомо недостовірні відомості в декларації:</b>\n\n"
+        "🟥 <b>Кримінальна:</b> понад 750 ПМ* (понад 2 271 000 грн у 2025 році; понад 2 496 000 грн у 2026 році).\n\n"
+        "🟧 <b>Адміністративна:</b> від 150 до 750 ПМ* (від 454 200 грн до 2 271 000 грн у 2025 році; від 499 200 грн до 2 496 000 грн у 2026 році).\n\n"
+        "🟨 <b>Дисциплінарна</b> (догана, сувора догана, звільнення тощо): до 150 ПМ* (до 454 200 грн у 2025 році; до 499 200 грн у 2026 році).\n\n"
+        "<i>* 1 ПМ у 2025 році = 3028 грн</i>\n"
+        "<i>  1 ПМ у 2026 році = 3328 грн</i>"
     )
     await message.answer(text, parse_mode="HTML")
 
 @dp.message(F.text == "👤 Адміністратор")
 async def admin_contact(message: types.Message):
     await message.answer("👤 <b>Адміністратор Альона</b>\n📞 <code>0660787241</code>", parse_mode="HTML")
+
+@dp.message(F.text == "📅 Терміни подання")
+async def terms(message: types.Message):
+    await message.answer("📅 <b>Терміни подання:</b>\n\nЩорічна декларація за 2025 рік подається з 1 січня до <b>31 березня 2026 року</b> включно.", parse_mode="HTML")
 
 @dp.message(F.text == "📂 Розділи декларування")
 async def show_sections(message: types.Message):
@@ -162,8 +167,23 @@ async def handle_section(message: types.Message):
     if num in ANSWERS:
         await message.answer(ANSWERS[num], parse_mode="HTML", disable_web_page_preview=True)
 
+# --- ВЕБСЕРВЕР ДЛЯ БУДИЛЬНИКА CRON-JOB ---
+async def handle_ping(request):
+    return web.Response(text="Bot is alive!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
 async def main():
     logging.basicConfig(level=logging.INFO)
+    await start_web_server()
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
